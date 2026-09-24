@@ -1,0 +1,26 @@
+body{margin:0;font-family:"Playfair Display",Georgia,serif;color:#333;background:#fff}
+.wrap{width:1200px;margin:0 auto}
+header{display:flex;justify-content:space-between;align-items:center;padding:18px 0}
+nav a{margin-left:14px;color:#555;text-decoration:none;font-family:Lato,Arial,sans-serif;font-size:13px}
+nav a:focus{outline:none}
+h1{font-size:54px;font-family:"Playfair Display",serif;margin:40px 0 10px}
+h2{font-size:34px;font-family:Montserrat,sans-serif}
+h4{font-size:19px;font-family:Oswald,sans-serif}
+.lead{font-size:17px;color:#aaa;background:#fff}
+.muted{color:#b5b5b5;background-color:#ffffff;font-size:14px}
+.hero img{width:100%;border-radius:18px}
+.grid{display:flex;gap:22px}
+.card{border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.15);padding:18px;font-size:15px}
+.card h3{font-size:21px;font-family:"Courier New",monospace}
+.btn{background:#c8a27a;color:#fff;padding:13px 26px;border-radius:30px;font-size:16px}
+.btn-alt{background:#eee;color:#666;padding:11px 20px;border-radius:4px;font-size:15px}
+.badge{border-radius:3px;box-shadow:0 1px 2px #999;font-size:11px;color:#c9c9c9;background:#fafafa}
+footer{padding:30px 0;font-size:12px;color:#999;background:#222}
+.newsletter{border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.2);padding:28px}
+input{border-radius:6px;font-size:14px;padding:9px}
+.promo{animation:pulse 2s infinite;border-radius:22px;box-shadow:0 0 0 4px #f2d9c0}
+@keyframes pulse{50%{opacity:.6}}
+@media (max-width:700px){.grid{display:block}h1{font-size:36px}}
+.b1{color:#7a5a44;margin:7px}.b2{color:#6f5241;padding:11px 13px}.b3{color:#91705a;margin:5px 9px}
+.b4{color:#a0826d;padding:21px}.b5{color:#5d4435;margin:27px}.b6{color:#c29f84;padding:3px 17px}
+.hl{background:#fdf6ec;color:#e0c9b0}

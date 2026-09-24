@@ -1,0 +1,3 @@
+# Merge into the config.toml created by `supabase init`.
+[functions.audit]
+verify_jwt = false   # the function verifies user JWTs itself so anonymous trial audits work

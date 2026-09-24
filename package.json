@@ -1,0 +1,13 @@
+{
+  "name": "ai-design-website-auditor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AI Design & Website Auditor — professional website audit SaaS (MVP)",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "dev": "node server/dev-server.mjs",
+    "sample": "node scripts/generate-sample.mjs",
+    "deploy:fn": "supabase functions deploy audit --no-verify-jwt"
+  }
+}
