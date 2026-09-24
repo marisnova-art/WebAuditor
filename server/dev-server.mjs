@@ -44,7 +44,8 @@ const server = http.createServer(async (req, res) => {
       send('done', { report });
     } catch (e) {
       console.warn('[audit] failed', e?.code || '', e?.message);
-      send('error', { code: e?.code || 'INTERNAL', message: MESSAGES[input.lang] || MESSAGES.en });
+      send('error', { code: e?.code || 'INTERNAL', message: MESSAGES[input.lang] || MESSAGES.en, detail: String(e?.detail || e?.message || e).slice(0, 300) });
+      if (!e?.code) console.error(e);
     }
     return res.end();
   }

@@ -15,9 +15,8 @@
 <script>
 /* ── Public configuration (safe to expose). Never put AI keys here. ── */
 window.AUDITOR_CONFIG = {
-  SUPABASE_URL: 'https://ptnfwrzwpireodomidcj.supabase.co',        // e.g. https://abcd.supabase.co   — empty = local mode
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0bmZ3cnp3cGlyZW9kb21pZGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTYzODQsImV4cCI6MjEwNTc3MjM4NH0.PNnWTs43IY1Vzs4t-JTG27sP64JThQiqWG0vBEI3G8A
-',   // public anon key
+  SUPABASE_URL: 'https://ptnfwrzwpireodomidcj.supabase.co',   // empty = local mode (node server/dev-server.mjs)
+  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB0bmZ3cnp3cGlyZW9kb21pZGNqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAxOTYzODQsImV4cCI6MjEwNTc3MjM4NH0.PNnWTs43IY1Vzs4t-JTG27sP64JThQiqWG0vBEI3G8A',   // public anon key (safe to expose)
   AUDIT_ENDPOINT: '',      // default: SUPABASE_URL/functions/v1/audit, or /api/audit in local mode
   DEFAULT_LANG: 'auto',    // 'auto' | 'en' | 'ko'
   BRAND_NAME: 'AI Design & Website Auditor',
@@ -484,6 +483,8 @@ const I18N = {
     'err.SERVER_ERROR': 'The audit server returned an error. Check the server log (terminal or Supabase function logs).',
     'err.STREAM_INTERRUPTED': 'The connection closed before the report was finished. Try again; if it repeats, check the server log.',
     'err.techInfo': 'Technical details',
+    'err.FUNCTION_MISSING': 'The “audit” Edge Function is not deployed on this Supabase project yet. Deploy it with: supabase functions deploy audit --no-verify-jwt',
+    'err.FUNCTION_UNREACHABLE': 'Couldn’t reach the Supabase “audit” function. Check that it is deployed and that ALLOWED_ORIGINS includes this site’s address.',
     'warn.JS_HEAVY': 'This page renders most content with JavaScript. The initial HTML contains little content, so confidence is lowered.',
     'warn.AI_FAILED': 'The AI review didn’t complete. Scores below are based on rule checks only.', 'warn.RENDERED': 'Content was captured through pre-rendering.',
     'warn.mock': 'AI analysis is not connected in this environment. The report uses observed rule checks only; visual and brand judgments are marked “not measured”.',
@@ -552,6 +553,8 @@ const I18N = {
     'err.SERVER_ERROR': '분석 서버에서 오류가 발생했습니다. 서버 로그(터미널 또는 Supabase 함수 로그)를 확인하세요.',
     'err.STREAM_INTERRUPTED': '리포트가 완성되기 전에 연결이 끊겼습니다. 다시 시도하고, 반복되면 서버 로그를 확인하세요.',
     'err.techInfo': '기술 정보',
+    'err.FUNCTION_MISSING': '이 Supabase 프로젝트에 “audit” Edge Function이 아직 배포되지 않았습니다. supabase functions deploy audit --no-verify-jwt 로 배포하세요.',
+    'err.FUNCTION_UNREACHABLE': 'Supabase “audit” 함수에 연결할 수 없습니다. 함수가 배포되었는지, ALLOWED_ORIGINS에 이 사이트 주소가 포함되었는지 확인하세요.',
     'warn.JS_HEAVY': '이 페이지는 대부분의 콘텐츠를 자바스크립트로 렌더링합니다. 초기 HTML의 콘텐츠가 적어 신뢰도를 낮췄습니다.',
     'warn.AI_FAILED': 'AI 검토가 완료되지 않았습니다. 아래 점수는 규칙 체크만으로 계산되었습니다.', 'warn.RENDERED': '사전 렌더링으로 콘텐츠를 수집했습니다.',
     'warn.mock': '이 환경에는 AI 분석이 연결되지 않았습니다. 리포트는 관찰된 규칙 체크만 사용하며, 비주얼·브랜드 판단은 ‘측정 안 됨’으로 표시됩니다.',
@@ -704,14 +707,15 @@ async function streamAudit(url, onEvent) {
   if (location.protocol === 'file:') throw new ClientError('FILE_PROTOCOL', location.href);
   let res;
   try { res = await fetch(ENDPOINT, { method: 'POST', headers, body: JSON.stringify({ url, lang: state.lang }) }); }
-  catch (e) { throw new ClientError('NETWORK', `${ENDPOINT} — ${e.message}`); }
+  catch (e) { throw new ClientError(HAS_SB ? 'FUNCTION_UNREACHABLE' : 'NETWORK', `${ENDPOINT} — ${e.message}`); }
   const ctype = res.headers.get('content-type') || '';
   if (!res.ok) {
     const j = await res.json().catch(() => ({}));
-    const code = j.code || (res.status === 429 ? 'RATE_LIMIT' : [404, 405, 501].includes(res.status) ? 'ENDPOINT_MISSING' : res.status >= 500 ? 'SERVER_ERROR' : 'INTERNAL');
+    const known = j.code && I18N.en['err.' + j.code];
+    const code = known ? j.code : HAS_SB && res.status === 404 ? 'FUNCTION_MISSING' : (res.status === 429 ? 'RATE_LIMIT' : [404, 405, 501].includes(res.status) ? 'ENDPOINT_MISSING' : res.status >= 500 ? 'SERVER_ERROR' : 'INTERNAL');
     throw new ClientError(code, `HTTP ${res.status} ${res.statusText} — ${ENDPOINT}${j.message ? ' — ' + j.message : ''}`);
   }
-  if (!ctype.includes('text/event-stream')) throw new ClientError('ENDPOINT_MISSING', `HTTP ${res.status}, content-type: ${ctype || 'none'} — ${ENDPOINT}`);
+  if (!ctype.includes('text/event-stream')) throw new ClientError(HAS_SB ? 'FUNCTION_MISSING' : 'ENDPOINT_MISSING', `HTTP ${res.status}, content-type: ${ctype || 'none'} — ${ENDPOINT}`);
   const reader = res.body.getReader();
   const dec = new TextDecoder();
   let buf = '', final = null, last = '';

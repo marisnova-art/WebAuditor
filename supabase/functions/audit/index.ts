@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
       const code = (e as { code?: string })?.code || 'INTERNAL';
       console.error('[audit] failed', code, (e as Error)?.message);
       if (auditId) await admin.from('audits').update({ status: 'failed', error_code: code }).eq('id', auditId);
-      await send('error', { code, message: MESSAGES[lang] });
+      await send('error', { code, message: MESSAGES[lang], detail: Deno.env.get('DEBUG_ERRORS') === '1' ? String((e as Error)?.message || e).slice(0, 300) : undefined });
     } finally {
       await writer.close().catch(() => {});
     }
